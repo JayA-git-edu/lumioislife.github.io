@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lumio - Modern Gaming Platform</title>
-    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
@@ -48,6 +48,13 @@
                         <path d="m21 21-4.35-4.35"></path>
                     </svg>
                 </div>
+                <button class="ambient-btn" id="ambient-btn" aria-label="Ambient Sound" title="Toggle Ambient Sound">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path d="M9 18V5l12-2v13"></path>
+                        <circle cx="6" cy="18" r="3"></circle>
+                        <circle cx="18" cy="16" r="3"></circle>
+                    </svg>
+                </button>
                 <button class="settings-btn" id="settings-btn" aria-label="Settings">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                         <circle cx="12" cy="12" r="3"></circle>
@@ -144,6 +151,26 @@
                             <span>Sound Effects</span>
                             <input type="checkbox" id="sound-effects" class="toggle-switch">
                             <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="setting-item">
+                        <label>
+                            <span>Ambient Sound</span>
+                            <select id="ambient-soundscape" class="theme-select">
+                                <option value="none">Off</option>
+                                <option value="lofi">Lo-Fi Chill</option>
+                                <option value="rain">Gentle Rain</option>
+                                <option value="space">Deep Space</option>
+                                <option value="nature">Forest Calm</option>
+                                <option value="ocean">Ocean Waves</option>
+                            </select>
+                        </label>
+                    </div>
+                    <div class="setting-item">
+                        <label>
+                            <span>Ambient Volume</span>
+                            <input type="range" id="ambient-volume" class="range-slider" min="0" max="1" step="0.1" value="0.3">
+                            <span class="range-value" id="ambient-volume-value">30%</span>
                         </label>
                     </div>
                 </div>
@@ -262,11 +289,13 @@
         </div>
     </div>
 
-    <script src="assets/js/background.js"></script>
-    <script src="assets/js/frameworkDetector.js"></script>
-    <script src="assets/js/frameworkFilter.js"></script>
-    <script src="assets/js/gameData.js"></script>
-    <script src="assets/js/main.js"></script>
+    <script src="saveSystem.js"></script>
+    <script src="ambientSound.js"></script>
+    <script src="background.js"></script>
+    <script src="frameworkDetector.js"></script>
+    <script src="frameworkFilter.js"></script>
+    <script src="gameData.js"></script>
+    <script src="main.js"></script>
 </body>
 </html>
 

@@ -10,21 +10,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     await initializeApp();
     setupEventListeners();
     loadSettings();
+    setupAmbientSoundSettings();
 });
 
 async function initializeApp() {
     // Show loading screen
     const loadingScreen = document.getElementById('loading-screen');
-    
+
     // Simulate loading
     await new Promise(resolve => setTimeout(resolve, 1500));
-    
+
     // Discover games
     await gameManager.discoverGames();
-    
+
     // Hide loading screen
     loadingScreen.classList.add('hidden');
-    
+
     // Setup framework filter
     const filterContainer = document.getElementById('framework-filter-container');
     if (filterContainer) {
@@ -33,10 +34,78 @@ async function initializeApp() {
             loadGames();
         });
     }
-    
+
     // Load initial games
     loadGames();
     loadCategories();
+}
+
+// Setup ambient sound settings handlers
+function setupAmbientSoundSettings() {
+    const ambientSoundscape = document.getElementById('ambient-soundscape');
+    const ambientVolume = document.getElementById('ambient-volume');
+    const ambientVolumeValue = document.getElementById('ambient-volume-value');
+    const ambientBtn = document.getElementById('ambient-btn');
+
+    // Load saved settings
+    if (ambientSoundscape) {
+        const savedSoundscape = localStorage.getItem('ambientSoundscape') || 'none';
+        ambientSoundscape.value = savedSoundscape;
+
+        ambientSoundscape.addEventListener('change', (e) => {
+            const soundscape = e.target.value;
+            if (window.ambientSound) {
+                if (soundscape === 'none') {
+                    window.ambientSound.disable();
+                    if (ambientBtn) ambientBtn.classList.remove('active');
+                } else {
+                    window.ambientSound.play(soundscape);
+                    if (ambientBtn) ambientBtn.classList.add('active');
+                }
+            }
+        });
+    }
+
+    if (ambientVolume && ambientVolumeValue) {
+        const savedVolume = parseFloat(localStorage.getItem('ambientVolume') || '0.3');
+        ambientVolume.value = savedVolume;
+        ambientVolumeValue.textContent = Math.round(savedVolume * 100) + '%';
+
+        ambientVolume.addEventListener('input', (e) => {
+            const volume = parseFloat(e.target.value);
+            ambientVolumeValue.textContent = Math.round(volume * 100) + '%';
+            if (window.ambientSound) {
+                window.ambientSound.setVolume(volume);
+            }
+        });
+    }
+
+    // Setup ambient button toggle
+    if (ambientBtn) {
+        // Set initial state
+        const enabled = localStorage.getItem('ambientEnabled') === 'true';
+        const savedSoundscape = localStorage.getItem('ambientSoundscape');
+        if (enabled && savedSoundscape && savedSoundscape !== 'none') {
+            ambientBtn.classList.add('active');
+        }
+
+        ambientBtn.addEventListener('click', () => {
+            if (window.ambientSound) {
+                const isPlaying = window.ambientSound.toggle();
+                ambientBtn.classList.toggle('active', isPlaying);
+
+                // Update select if present
+                if (ambientSoundscape) {
+                    if (isPlaying) {
+                        const currentSoundscape = window.ambientSound.currentSoundscape || 'lofi';
+                        ambientSoundscape.value = currentSoundscape;
+                    } else {
+                        ambientSoundscape.value = 'none';
+                    }
+                }
+            }
+        });
+    }
 }
 
 function setupEventListeners() {
