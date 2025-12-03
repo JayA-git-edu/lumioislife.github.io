@@ -10,6 +10,497 @@
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
+    <!-- Lumio: Save system + UI/UX integration (paste before </body>) -->
+<script>
+/* ====== SaveManager ====== */
+class SaveManager {
+  constructor(namespace = 'lumio') {
+    this.ns = namespace;
+    this.supportsLocalStorage = this._testLocalStorage();
+  }
+  _testLocalStorage(){
+    try { const k='__lumio_test__'; localStorage.setItem(k,k); localStorage.removeItem(k); return true; }
+    catch(e){ return false; }
+  }
+  _key(slot){ return `${this.ns}:${slot}`; }
+  save(slot, obj){
+    const payload = JSON.stringify({ v:1, t: Date.now(), data: obj });
+    if(this.supportsLocalStorage) localStorage.setItem(this._key(slot), payload);
+    else document.cookie = encodeURIComponent(this._key(slot)) + '=' + encodeURIComponent(payload) + ';path=/;max-age='+(60*60*24*365);
+    return true;
+  }
+  load(slot){
+    const k = this._key(slot);
+    if(this.supportsLocalStorage){
+      const raw = localStorage.getItem(k);
+      if(!raw) return null;
+      try { return JSON.parse(raw).data; } catch(e){ return null; }
+    } else {
+      const cookies = document.cookie.split(';').map(s=>s.trim());
+      const found = cookies.find(c => c.startsWith(encodeURIComponent(k)+'='));
+      if(!found) return null;
+      try { return JSON.parse(decodeURIComponent(found.split('=')[1]||'')).data; } catch(e){ return null; }
+    }
+  }
+  remove(slot){
+    const k = this._key(slot);
+    if(this.supportsLocalStorage) localStorage.removeItem(k);
+    else document.cookie = encodeURIComponent(k) + '=;path=/;max-age=0';
+  }
+  exportSlot(slot){
+    const k = this._key(slot);
+    if(this.supportsLocalStorage) return localStorage.getItem(k);
+    const cookies = document.cookie.split(';').map(s=>s.trim());
+    const found = cookies.find(c => c.startsWith(encodeURIComponent(k)+'='));
+    return found ? decodeURIComponent(found.split('=')[1]||'') : null;
+  }
+  importSlot(slot, raw){
+    try {
+      // accept either raw meta object or wrapped payload
+      let parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+      const payload = (parsed && parsed.data) ? JSON.stringify(parsed) : JSON.stringify({v:1,t:Date.now(),data:parsed});
+      if(this.supportsLocalStorage) localStorage.setItem(this._key(slot), payload);
+      else document.cookie = encodeURIComponent(this._key(slot)) + '=' + encodeURIComponent(payload) + ';path=/;max-age='+(60*60*24*365);
+      return true;
+    } catch(e){
+      return false;
+    }
+  }
+}
+
+/* ====== Helper UI: toast ====== */
+function showToast(msg, ms=2200){
+  let t = document.getElementById('lumio-toast');
+  if(!t){
+    t = document.createElement('div');
+    t.id = 'lumio-toast';
+    t.className = 'lumio-toast';
+    document.body.appendChild(t);
+    Object.assign(t.style,{position:'fixed',left:'50%',transform:'translateX(-50%)',bottom:'28px',background:'rgba(0,0,0,0.8)',color:'#fff',padding:'8px 12px',borderRadius:'8px',zIndex:10000});
+  }
+  t.textContent = msg;
+  t.style.display='block';
+  clearTimeout(t._timeout);
+  t._timeout = setTimeout(()=> t.style.display='none', ms);
+}
+
+/* ====== DOM Utilities ====== */
+const $ = selector => document.querySelector(selector);
+const $$ = selector => Array.from(document.querySelectorAll(selector));
+
+/* ====== Main Integration ====== */
+document.addEventListener('DOMContentLoaded', () => {
+  const save = new SaveManager('lumio_site');
+  // default settings
+  const defaultSettings = {
+    soundEffects: true,
+    bgAnimation: true,
+    bgPattern: 'particles',
+    bgColor: '#0a0e27',
+    accentColor: '#00d4ff',
+    animationSpeed: 1.0,
+    theme: 'dark',
+    openMethod: 'embed',
+    showOpenBtn: true,
+    language: 'en'
+  };
+
+  // load settings or use defaults
+  const settings = Object.assign({}, defaultSettings, save.load('settings') || {});
+  const favorites = new Set(save.load('favorites') || []);
+
+  // applied UI values (syncs DOM inputs)
+  function applySettingsToDOM(){
+    const map = {
+      '#sound-effects': 'soundEffects',
+      '#bg-animation': 'bgAnimation',
+      '#bg-pattern': 'bgPattern',
+      '#bg-color': 'bgColor',
+      '#bg-color-text': 'bgColor',
+      '#accent-color': 'accentColor',
+      '#accent-color-text': 'accentColor',
+      '#animation-speed': 'animationSpeed',
+      '#speed-value': 'animationSpeed',
+      '#theme-select': 'theme',
+      '#open-method': 'openMethod',
+      '#show-open-btn': 'showOpenBtn',
+      '#language-select': 'language'
+    };
+    Object.entries(map).forEach(([sel,key])=>{
+      const el = $(sel);
+      if(!el) return;
+      if(el.type === 'checkbox') el.checked = !!settings[key];
+      else if(el.tagName === 'SELECT' || el.type === 'range' || el.type === 'text' || el.type === 'color') el.value = settings[key];
+      else el.textContent = (key === 'animationSpeed') ? settings[key].toFixed(1) + 'x' : settings[key];
+    });
+    document.documentElement.style.setProperty('--bg-color', settings.bgColor);
+    document.documentElement.style.setProperty('--accent-color', settings.accentColor);
+    // theme
+    document.documentElement.dataset.theme = settings.theme || 'dark';
+  }
+
+  // read DOM settings into object and persist
+  function persistSettingsFromDOM(){
+    const s = {};
+    s.soundEffects = !!$('#sound-effects')?.checked;
+    s.bgAnimation = !!$('#bg-animation')?.checked;
+    s.bgPattern = $('#bg-pattern')?.value || defaultSettings.bgPattern;
+    s.bgColor = $('#bg-color')?.value || defaultSettings.bgColor;
+    s.accentColor = $('#accent-color')?.value || defaultSettings.accentColor;
+    s.animationSpeed = parseFloat($('#animation-speed')?.value || 1);
+    s.theme = $('#theme-select')?.value || 'dark';
+    s.openMethod = $('#open-method')?.value || 'embed';
+    s.showOpenBtn = !!$('#show-open-btn')?.checked;
+    s.language = $('#language-select')?.value || 'en';
+    save.save('settings', s);
+    Object.assign(settings, s);
+    applySettingsToDOM();
+    showToast('Settings saved');
+  }
+
+  // wire up simple inputs for settings
+  $('#settings-btn')?.addEventListener('click', () => $('#settings-modal')?.classList.add('open'));
+  $('#settings-close')?.addEventListener('click', () => $('#settings-modal')?.classList.remove('open'));
+  $$('#settings-modal input, #settings-modal select')?.forEach(el => {
+    el.addEventListener('change', () => persistSettingsFromDOM());
+  });
+
+  // color text sync
+  $('#bg-color-text')?.addEventListener('input', e => { const v=e.target.value; $('#bg-color').value = v; persistSettingsFromDOM(); });
+  $('#bg-color')?.addEventListener('input', e => { $('#bg-color-text').value = e.target.value; persistSettingsFromDOM(); });
+  $('#accent-color-text')?.addEventListener('input', e => { $('#accent-color').value = e.target.value; persistSettingsFromDOM(); });
+  $('#accent-color')?.addEventListener('input', e => { $('#accent-color-text').value = e.target.value; persistSettingsFromDOM(); });
+  $('#animation-speed')?.addEventListener('input', e => { $('#speed-value').textContent = parseFloat(e.target.value).toFixed(1) + 'x'; persistSettingsFromDOM(); });
+
+  applySettingsToDOM();
+
+  // games data: support multiple names for compatibility
+  const GAMES = (window.GAMES || window.games || window.gameData || window._GAMES) || [];
+  // if games are stored differently, user will still be able to add favorites manually from UI added below
+
+  // Loading screen hide - smoother
+  const loadingScreen = $('#loading-screen');
+  function hideLoading(){
+    if(!loadingScreen) return;
+    loadingScreen.style.opacity = 0;
+    setTimeout(()=> loadingScreen.remove(), 350);
+  }
+  window.addEventListener('load', () => setTimeout(hideLoading, 300));
+
+  /* ====== Render Games Grid ====== */
+  const gamesGrid = $('#games-grid');
+  const newGrid = $('#new-games-grid');
+  const trendingGrid = $('#trending-games-grid');
+  const favoritesGrid = $('#favorites-grid');
+
+  function createGameCard(game){
+    // game: {id, title, thumb, description, url, tags, new, trending}
+    const card = document.createElement('article');
+    card.className = 'game-card';
+    card.dataset.id = game.id || game.slug || game.title;
+    card.innerHTML = `
+      <div class="game-thumb-wrap" role="button" tabindex="0" aria-label="Open ${escapeHtml(game.title||'Game')}">
+        <img class="game-thumb" src="${escapeHtml(game.thumb||'assets/images/placeholder.png')}" alt="${escapeHtml(game.title||'Game Thumbnail')}">
+      </div>
+      <div class="game-body">
+        <h3 class="game-title">${escapeHtml(game.title||'Untitled')}</h3>
+        <p class="game-desc">${escapeHtml((game.description||'').slice(0,120))}</p>
+        <div class="game-actions">
+          <button class="btn-open">Play</button>
+          <button class="btn-open-new" style="display:none">Open</button>
+          <button class="btn-fav" aria-pressed="${favorites.has(card.dataset.id)}">${favorites.has(card.dataset.id)?'★':'☆'}</button>
+        </div>
+      </div>
+    `;
+    // Add event handlers
+    const openBtn = card.querySelector('.btn-open');
+    openBtn.addEventListener('click', () => openGame(game));
+    const favBtn = card.querySelector('.btn-fav');
+    favBtn.addEventListener('click', () => {
+      toggleFavorite(card.dataset.id, favBtn);
+    });
+    // clicking thumbnail also opens
+    card.querySelector('.game-thumb-wrap').addEventListener('click', () => openGame(game));
+    card.querySelector('.game-thumb-wrap').addEventListener('keypress', (e) => { if(e.key === 'Enter') openGame(game); });
+    return card;
+  }
+
+  function renderGrid(list, container){
+    if(!container) return;
+    container.innerHTML = '';
+    for(const g of list){
+      container.appendChild(createGameCard(g));
+    }
+  }
+
+  // Best-effort: determine lists
+  const allGames = Array.isArray(GAMES) ? GAMES : [];
+  const newGames = allGames.filter(g => g.new);
+  const trendingGames = allGames.filter(g => g.trending);
+  const favList = () => allGames.filter(g => favorites.has(g.id || g.slug || g.title));
+
+  // initial render
+  renderGrid(allGames, gamesGrid);
+  renderGrid(newGames, newGrid);
+  renderGrid(trendingGames, trendingGrid);
+  renderGrid(favList(), favoritesGrid);
+
+  // search
+  $('#search-input')?.addEventListener('input', (e) => {
+    const q = e.target.value.trim().toLowerCase();
+    const filtered = allGames.filter(g => (g.title||'').toLowerCase().includes(q) || (g.tags||[]).join(' ').toLowerCase().includes(q));
+    renderGrid(filtered, gamesGrid);
+  });
+
+  // load more: if there's server-side paging replace this
+  $('#load-more-btn')?.addEventListener('click', () => {
+    showToast('No more games to load — this is a client demo.');
+  });
+
+  // favorites management
+  function toggleFavorite(id, btn){
+    if(favorites.has(id)) { favorites.delete(id); btn.textContent = '☆'; btn.setAttribute('aria-pressed','false'); }
+    else { favorites.add(id); btn.textContent = '★'; btn.setAttribute('aria-pressed','true'); }
+    save.save('favorites', Array.from(favorites));
+    // update favorites grid
+    renderGrid(favList(), favoritesGrid);
+    showToast(favorites.has(id) ? 'Added to favorites' : 'Removed from favorites');
+  }
+
+  // escape html helper
+  function escapeHtml(s=''){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+  /* ====== Open Game Behavior (respects settings) ====== */
+  function openGame(game){
+    const method = settings.openMethod || 'embed';
+    // simple handling for common cases
+    if(!game || !game.url){
+      showToast('This game has no playable URL.');
+      return;
+    }
+    if(method === 'newtab' || method === 'aboutblank'){
+      // open raw url in new tab (about:blank handled same here)
+      window.open(game.url, '_blank');
+      return;
+    }
+    if(method === 'popup'){
+      const w = Math.min(1100, Math.max(600, Math.round(window.innerWidth * 0.75)));
+      const h = Math.min(800, Math.max(400, Math.round(window.innerHeight * 0.75)));
+      window.open(game.url, '_blank', `width=${w},height=${h},resizable=yes`);
+      return;
+    }
+    // default: embed in-game detail page iframe
+    showGameDetail(game);
+  }
+
+  /* ====== Game Detail embed & per-game save hooks ====== */
+  const gameDetailPage = $('#game-detail-page');
+  const gameDetailContent = $('#game-detail-content');
+  const backBtn = $('#back-btn');
+  backBtn?.addEventListener('click', hideGameDetail);
+
+  function showGameDetail(game){
+    if(!gameDetailPage || !gameDetailContent) return;
+    gameDetailContent.innerHTML = ''; // clear
+    // header
+    const header = document.createElement('div');
+    header.className = 'detail-header';
+    header.innerHTML = `<h2>${escapeHtml(game.title||'Game')}</h2><p>${escapeHtml(game.description||'')}</p>`;
+    // action bar: Save/Load/Export/Import
+    const actions = document.createElement('div');
+    actions.className = 'detail-actions';
+    actions.innerHTML = `
+      <button class="btn-save-game">Save Progress</button>
+      <button class="btn-load-game">Load Progress</button>
+      <button class="btn-export-game">Export Save</button>
+      <button class="btn-import-game">Import Save</button>
+      <button class="btn-open-external">Open in New Tab</button>
+    `;
+    // iframe/embedding area
+    const frameWrap = document.createElement('div');
+    frameWrap.className = 'detail-frame-wrap';
+    frameWrap.innerHTML = `<iframe class="game-embed" sandbox="allow-scripts allow-same-origin allow-forms" src="${escapeHtml(game.url)}" style="width:100%;height:600px;border:0;border-radius:8px;"></iframe>`;
+    gameDetailContent.appendChild(header);
+    gameDetailContent.appendChild(actions);
+    gameDetailContent.appendChild(frameWrap);
+    // show
+    gameDetailPage.classList.add('open');
+
+    // per-game save helpers using SaveManager - tries to message iframe (postMessage) if it supports local save API
+    const slot = `game_${game.id || (game.slug||game.title).replace(/\s+/g,'_')}`;
+    const btnSave = actions.querySelector('.btn-save-game');
+    const btnLoad = actions.querySelector('.btn-load-game');
+    const btnExport = actions.querySelector('.btn-export-game');
+    const btnImport = actions.querySelector('.btn-import-game');
+    const btnOpenExt = actions.querySelector('.btn-open-external');
+
+    btnSave.addEventListener('click', async () => {
+      // attempt to ask iframe for state via postMessage (if game implements window.addEventListener('message') listener)
+      const iframe = frameWrap.querySelector('iframe');
+      try {
+        iframe.contentWindow.postMessage({lumio:'requestSave'}, '*');
+        // also save a placeholder so there's always something
+        save.save(slot, {meta:`Lumio save at ${new Date().toISOString()}`});
+        showToast('Save requested — if the game supports saves it will respond.');
+      } catch(e){
+        // fallback: store generic presence
+        save.save(slot, {meta:`Fallback save ${new Date().toISOString()}`});
+        showToast('Save stored locally (fallback).');
+      }
+    });
+
+    btnLoad.addEventListener('click', () => {
+      const data = save.load(slot);
+      if(!data) { showToast('No save found for this game.'); return; }
+      // post to iframe if possible
+      const iframe = frameWrap.querySelector('iframe');
+      try {
+        iframe.contentWindow.postMessage({lumio:'loadSave', payload: data}, '*');
+        showToast('Load requested — if the game supports loads it will respond.');
+      } catch(e){
+        showToast('Loaded local save (no in-game restore available).');
+      }
+    });
+
+    btnExport.addEventListener('click', () => {
+      const raw = save.exportSlot(slot);
+      if(!raw){ showToast('No save to export.'); return; }
+      // download as file
+      const blob = new Blob([raw], {type: 'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = `${slot}-lumio-save.json`; a.click();
+      URL.revokeObjectURL(url);
+      showToast('Export started.');
+    });
+
+    btnImport.addEventListener('click', () => {
+      const input = document.createElement('input'); input.type = 'file'; input.accept='application/json';
+      input.addEventListener('change', async (e) => {
+        const f = e.target.files[0];
+        if(!f) return;
+        const txt = await f.text();
+        const ok = save.importSlot(slot, txt);
+        showToast(ok ? 'Import successful.' : 'Import failed.');
+      });
+      input.click();
+    });
+
+    btnOpenExt.addEventListener('click', () => window.open(game.url, '_blank'));
+  }
+
+  function hideGameDetail(){
+    gameDetailPage?.classList.remove('open');
+    gameDetailContent.innerHTML = '';
+  }
+
+  // listen for postMessage responses from iframes (games) — allow games to send saves back
+  window.addEventListener('message', (ev) => {
+    try {
+      const data = ev.data;
+      if(!data || typeof data !== 'object') return;
+      if(data.lumio === 'saveResponse' && data.slot && data.payload){
+        save.save(data.slot, data.payload);
+        showToast('Game save received and stored.');
+      }
+    } catch(e){}
+  });
+
+  /* ====== Canvas helper for high-DPI (for background and game canvases) ====== */
+  function fitHighDPI(canvas){
+    if(!canvas) return;
+    const dpr = Math.max(window.devicePixelRatio || 1, 1);
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = Math.round(rect.width * dpr);
+    canvas.height = Math.round(rect.height * dpr);
+    canvas.style.width = rect.width + 'px';
+    canvas.style.height = rect.height + 'px';
+    const ctx = canvas.getContext('2d');
+    ctx && ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  // resize observer for background canvas
+  const bgCanvas = $('#background-canvas');
+  if(bgCanvas){ 
+    function onResize(){ fitHighDPI(bgCanvas); /* if you have background.js expose redraw function call it here */ }
+    window.addEventListener('resize', onResize);
+    setTimeout(onResize, 120);
+  }
+
+  /* ====== Small accessibility & UX tweaks ====== */
+  // Close dropdowns when clicking outside
+  document.addEventListener('click', (e) => {
+    if(!e.target.closest('.profile-dropdown')) $('#profile-menu')?.classList.remove('open');
+  });
+  $('#profile-btn')?.addEventListener('click', (e) => { e.stopPropagation(); $('#profile-menu')?.classList.toggle('open'); });
+
+  // basic keyboard nav for pages
+  $$('.nav-link').forEach(a => a.addEventListener('click', (ev) => {
+    ev.preventDefault();
+    const page = a.dataset.page;
+    $$('.page-section').forEach(s => s.id === `${page}-page` ? s.classList.add('active') : s.classList.remove('active'));
+    $$('.nav-link').forEach(n => n.classList.remove('active'));
+    a.classList.add('active');
+  }));
+
+  /* ====== Export/Import entire site config (settings + favorites) ====== */
+  // add small controls to settings modal if present
+  (function addExportImportToSettings(){
+    const modalBody = document.querySelector('#settings-modal .modal-body');
+    if(!modalBody) return;
+    const wrapper = document.createElement('div');
+    wrapper.className = 'settings-section';
+    wrapper.innerHTML = `
+      <h3>Save / Transfer</h3>
+      <div class="setting-item">
+        <button class="btn-quick-export">Export Profile</button>
+        <button class="btn-quick-import">Import Profile</button>
+        <button class="btn-quick-reset">Reset All</button>
+      </div>
+    `;
+    modalBody.appendChild(wrapper);
+    wrapper.querySelector('.btn-quick-export').addEventListener('click', () => {
+      const payload = {
+        settings: save.load('settings') || settings,
+        favorites: Array.from(favorites || []),
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = 'lumio-profile.json'; a.click();
+      URL.revokeObjectURL(url);
+      showToast('Export started.');
+    });
+    wrapper.querySelector('.btn-quick-import').addEventListener('click', () => {
+      const input = document.createElement('input'); input.type='file'; input.accept='application/json';
+      input.addEventListener('change', async (e) => {
+        const f = e.target.files[0]; if(!f) return;
+        try {
+          const txt = await f.text();
+          const parsed = JSON.parse(txt);
+          if(parsed.settings) save.save('settings', parsed.settings);
+          if(Array.isArray(parsed.favorites)) { save.save('favorites', parsed.favorites); parsed.favorites.forEach(id => favorites.add(id)); }
+          applySettingsToDOM();
+          renderGrid(allGames, gamesGrid);
+          renderGrid(favList(), favoritesGrid);
+          showToast('Profile imported.');
+        } catch(e){ showToast('Import failed.'); }
+      });
+      input.click();
+    });
+    wrapper.querySelector('.btn-quick-reset').addEventListener('click', () => {
+      if(!confirm('Reset all Lumio settings and favorites?')) return;
+      save.remove('settings'); save.remove('favorites');
+      favorites.clear();
+      Object.assign(settings, defaultSettings);
+      applySettingsToDOM();
+      renderGrid(allGames, gamesGrid);
+      renderGrid(favList(), favoritesGrid);
+      showToast('Reset complete.');
+    });
+  })();
+
+  showToast('Lumio UI loaded — settings restored.');
+});
+</script>
+
     <!-- Loading Screen -->
     <div id="loading-screen" class="loading-screen">
         <div class="loading-content">
@@ -269,4 +760,5 @@
     <script src="assets/js/main.js"></script>
 </body>
 </html>
+
 
