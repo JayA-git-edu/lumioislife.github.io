@@ -1,15 +1,17 @@
 // Game Detail Page Logic
 let currentGameInstance = null;
+let currentGameId = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
     const urlParams = new URLSearchParams(window.location.search);
     const gameId = urlParams.get('id');
-    
+
     // Try to get game from session storage first
     let game = null;
     const storedGame = sessionStorage.getItem('currentGame');
     if (storedGame) {
         game = JSON.parse(storedGame);
+        currentGameId = game.id;
         displayGame(game);
     } else {
         // Fallback: create game manager and find game
@@ -17,6 +19,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         await gameManager.discoverGames();
         game = gameManager.games.find(g => g.id === gameId);
         if (game) {
+            currentGameId = game.id;
             displayGame(game);
         } else {
             // If game not found, redirect to home
@@ -25,6 +28,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     setupGamePageListeners();
+
+    // Handle page unload to save play time
+    window.addEventListener('beforeunload', () => {
+        if (currentGameId && window.saveSystem) {
+            window.saveSystem.endGame(currentGameId);
+        }
+    });
 });
 
 function displayGame(game) {
@@ -34,9 +44,15 @@ function displayGame(game) {
     // Update page title
     document.getElementById('game-title').textContent = `${game.name} - Lumio`;
 
+    // Get save data for this game
+    const saveData = window.saveSystem ? window.saveSystem.getGameSave(game.id) : null;
+    const playTimeDisplay = saveData ? window.saveSystem.formatPlayTime(saveData.totalPlayTime) : '0s';
+    const lastPlayedDisplay = saveData ? window.saveSystem.formatLastPlayed(saveData.lastPlayed) : 'Never';
+    const playCount = saveData ? saveData.playCount : 0;
+
     wrapper.innerHTML = `
         <img src="${game.thumbnail}" alt="${game.name}" class="game-banner" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'800\\' height=\\'400\\'%3E%3Crect fill=\\'%23141b3d\\' width=\\'800\\' height=\\'400\\'/%3E%3Ctext fill=\\'%2300d4ff\\' font-family=\\'Arial\\' font-size=\\'40\\' x=\\'50%25\\' y=\\'50%25\\' text-anchor=\\'middle\\' dy=\\'.3em\\'%3E${encodeURIComponent(game.name)}%3C/text%3E%3C/svg%3E'">
-        
+
         <div class="game-header">
             <div class="game-info">
                 <h1 class="game-title-large">${game.name}</h1>
@@ -45,6 +61,20 @@ function displayGame(game) {
                     ${game.tags.map(tag => `<span class="game-tag">${tag}</span>`).join('')}
                 </div>
                 <p class="game-description">${game.description}</p>
+                <div class="game-stats" style="display: flex; gap: 2rem; margin-top: 1rem; flex-wrap: wrap;">
+                    <div class="stat-item" style="text-align: center;">
+                        <div style="color: var(--neon-blue); font-family: 'Orbitron', sans-serif; font-size: 1.5rem;">${playCount}</div>
+                        <div style="color: var(--text-secondary); font-size: 0.85rem;">Times Played</div>
+                    </div>
+                    <div class="stat-item" style="text-align: center;">
+                        <div style="color: var(--neon-purple); font-family: 'Orbitron', sans-serif; font-size: 1.5rem;">${playTimeDisplay}</div>
+                        <div style="color: var(--text-secondary); font-size: 0.85rem;">Play Time</div>
+                    </div>
+                    <div class="stat-item" style="text-align: center;">
+                        <div style="color: var(--neon-cyan); font-family: 'Orbitron', sans-serif; font-size: 1.5rem;">${lastPlayedDisplay}</div>
+                        <div style="color: var(--text-secondary); font-size: 0.85rem;">Last Played</div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -108,7 +138,7 @@ function displayGame(game) {
     const openAboutBlankBtn = document.getElementById('open-about-blank-btn');
     const gameContainer = document.getElementById('game-container');
     const gameIframe = document.getElementById('game-iframe');
-    
+
     // Check if show open button is enabled
     const showOpenBtn = localStorage.getItem('showOpenBtn') !== 'false';
     if (showOpenBtn && openNewTabBtn) {
@@ -117,26 +147,39 @@ function displayGame(game) {
     if (showOpenBtn && openAboutBlankBtn) {
         openAboutBlankBtn.style.display = 'inline-flex';
     }
-    
+
     if (playBtn) {
         playBtn.addEventListener('click', async () => {
             playBtn.style.display = 'none';
             if (openNewTabBtn) openNewTabBtn.style.display = 'none';
             if (openAboutBlankBtn) openAboutBlankBtn.style.display = 'none';
-            
+
+            // Record game start in save system
+            if (window.saveSystem) {
+                window.saveSystem.startGame(game.id);
+            }
+
             // Load game based on framework
             await loadGameByFramework(game, gameContainer, gameIframe);
         });
     }
-    
+
     if (openNewTabBtn) {
         openNewTabBtn.addEventListener('click', () => {
+            // Record game start in save system
+            if (window.saveSystem) {
+                window.saveSystem.startGame(game.id);
+            }
             window.open(game.path, '_blank');
         });
     }
-    
+
     if (openAboutBlankBtn) {
         openAboutBlankBtn.addEventListener('click', () => {
+            // Record game start in save system
+            if (window.saveSystem) {
+                window.saveSystem.startGame(game.id);
+            }
             // Open game in about:blank using a new window
             const newWindow = window.open('about:blank', '_blank');
             if (newWindow) {
@@ -151,7 +194,7 @@ function displayGame(game) {
                         </style>
                     </head>
                     <body>
-                        <iframe src="${game.path}" allowfullscreen></iframe>
+                        <iframe src="${window.location.origin}/${game.path}" allowfullscreen></iframe>
                     </body>
                     </html>
                 `);

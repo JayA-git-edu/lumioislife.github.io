@@ -362,7 +362,8 @@ body.no-bg-animation #background-canvas {
 }
 
 .settings-btn,
-.profile-btn {
+.profile-btn,
+.ambient-btn {
     background: rgba(255, 255, 255, 0.1);
     border: 1px solid rgba(0, 212, 255, 0.3);
     border-radius: var(--border-radius-small);
@@ -377,18 +378,30 @@ body.no-bg-animation #background-canvas {
 }
 
 .settings-btn svg,
-.profile-btn svg {
+.profile-btn svg,
+.ambient-btn svg {
     width: 20px;
     height: 20px;
     stroke-width: 2;
 }
 
 .settings-btn:hover,
-.profile-btn:hover {
+.profile-btn:hover,
+.ambient-btn:hover {
     background: rgba(0, 212, 255, 0.2);
     border-color: var(--neon-blue);
     box-shadow: 0 0 15px rgba(0, 212, 255, 0.3);
     transform: scale(1.05);
+}
+
+.ambient-btn.active {
+    background: rgba(0, 255, 136, 0.2);
+    border-color: var(--neon-green);
+    box-shadow: 0 0 15px rgba(0, 255, 136, 0.4);
+}
+
+.ambient-btn.active svg {
+    stroke: var(--neon-green);
 }
 
 .profile-dropdown {
