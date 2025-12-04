@@ -92,31 +92,6 @@ Games are automatically detected and loaded with the appropriate framework handl
    - Loading screen with animated Lumio logo
    - Quick and polished interactions
 
-## File Structure
-
-```
-/
-├── index.html              # Main homepage
-├── game.html              # Individual game page template
-├── assets/
-│   ├── css/
-│   │   └── style.css      # Main stylesheet
-│   └── js/
-│       ├── background.js  # Animated background canvas
-│       ├── gameData.js    # Game discovery and management
-│       ├── main.js        # Main application logic
-│       └── gamePage.js    # Game detail page logic
-└── [game-folders]/        # Individual game directories
-```
-
-## Usage
-
-1. Open `index.html` in a web browser
-2. The site will automatically discover games from the folder structure
-3. Browse games, search, filter by category, or view trending/new games
-4. Click any game to view its detail page and play
-5. Access settings via the settings button in the navigation bar
-
 ## Game Discovery
 
 The site automatically discovers games by:
@@ -167,4 +142,5 @@ Games are automatically discovered from folder structure. Ensure each game folde
 ## License
 
 This project is open source and available for use.
+
 
