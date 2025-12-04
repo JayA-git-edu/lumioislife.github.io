@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lumio - Modern Gaming Platform</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loading-screen" class="loading-screen">
+        <div class="loading-content">
+            <div class="lumio-logo-loading">
+                <span class="logo-text">LUMIO</span>
+                <div class="loading-particles"></div>
+            </div>
+            <div class="loading-bar">
+                <div class="loading-progress"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Animated Background -->
+    <canvas id="background-canvas"></canvas>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo" id="logo">
+                <span class="logo-text">LUMIO</span>
+                <span class="logo-glow"></span>
+            </div>
+            <div class="nav-links">
+                <a href="#" class="nav-link active" data-page="home">Home</a>
+                <a href="#" class="nav-link" data-page="categories">Categories</a>
+                <a href="#" class="nav-link" data-page="new">New Games</a>
+                <a href="#" class="nav-link" data-page="trending">Trending</a>
+                <a href="#" class="nav-link" data-page="favorites">Favorites</a>
+            </div>
+            <div class="nav-right">
+                <div class="nav-buttons-container">
+                    <button class="nav-history-btn" id="nav-back-btn" title="Back" aria-label="Go back">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" style="width: 18px; height: 18px;">
+                            <path d="M19 12H5M12 19l-7-7 7-7"/>
+                        </svg>
+                    </button>
+                    <button class="nav-history-btn" id="nav-reload-btn" title="Reload" aria-label="Reload page">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" style="width: 18px; height: 18px;">
+                            <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8M3 3v5h5M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16M21 21v-5h-5"/>
+                        </svg>
+                    </button>
+                    <button class="nav-history-btn" id="nav-forward-btn" title="Forward" aria-label="Go forward">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" style="width: 18px; height: 18px;">
+                            <path d="M5 12h14M12 5l7 7-7 7"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="search-container">
+                    <input type="text" id="search-input" class="search-input" placeholder="Search games...">
+                    <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <path d="m21 21-4.35-4.35"></path>
+                    </svg>
+                </div>
+                <button class="settings-btn" id="settings-btn" aria-label="Settings">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M12 1v6m0 6v6M5.64 5.64l4.24 4.24m4.24 4.24l4.24 4.24M1 12h6m6 0h6M5.64 18.36l4.24-4.24m4.24-4.24l4.24-4.24"></path>
+                    </svg>
+                </button>
+                <div class="profile-dropdown">
+                    <button class="profile-btn" id="profile-btn" aria-label="Profile">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                    </button>
+                    <div class="dropdown-menu" id="profile-menu">
+                        <a href="#" class="dropdown-item">Profile</a>
+                        <a href="#" class="dropdown-item">Account</a>
+                        <a href="#" class="dropdown-item">Logout</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content" id="main-content">
+        <!-- Home Page - Game Grid -->
+        <section class="page-section active" id="home-page">
+            <div class="page-header">
+                <h1 class="page-title">Discover Games</h1>
+                <p class="page-subtitle">Explore our collection of amazing games</p>
+            </div>
+            <div id="framework-filter-container"></div>
+            <div class="games-grid" id="games-grid">
+                <!-- Game frames will be dynamically inserted here -->
+            </div>
+            <div class="load-more-container">
+                <button class="load-more-btn" id="load-more-btn">Load More Games</button>
+            </div>
+        </section>
+
+        <!-- Categories Page -->
+        <section class="page-section" id="categories-page">
+            <div class="page-header">
+                <h1 class="page-title">Categories</h1>
+            </div>
+            <div class="categories-grid" id="categories-grid">
+                <!-- Categories will be dynamically inserted -->
+            </div>
+        </section>
+
+        <!-- New Games Page -->
+        <section class="page-section" id="new-page">
+            <div class="page-header">
+                <h1 class="page-title">New Games</h1>
+            </div>
+            <div class="games-grid" id="new-games-grid">
+                <!-- New games will be dynamically inserted -->
+            </div>
+        </section>
+
+        <!-- Trending Page -->
+        <section class="page-section" id="trending-page">
+            <div class="page-header">
+                <h1 class="page-title">Trending Now</h1>
+            </div>
+            <div class="games-grid" id="trending-games-grid">
+                <!-- Trending games will be dynamically inserted -->
+            </div>
+        </section>
+
+        <!-- Favorites Page -->
+        <section class="page-section" id="favorites-page">
+            <div class="page-header">
+                <h1 class="page-title">Your Favorites</h1>
+            </div>
+            <div class="games-grid" id="favorites-grid">
+                <!-- Favorites will be dynamically inserted -->
+            </div>
+        </section>
+    </main>
+
+    <!-- Settings Modal -->
+    <div class="modal-overlay" id="settings-modal">
+        <div class="modal-content settings-modal">
+            <div class="modal-header">
+                <h2>Settings</h2>
+                <button class="modal-close" id="settings-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="settings-section">
+                    <h3>Audio</h3>
+                    <div class="setting-item">
+                        <label>
+                            <span>Sound Effects</span>
+                            <input type="checkbox" id="sound-effects" class="toggle-switch">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+                <div class="settings-section">
+                    <h3>Visual</h3>
+                    <div class="setting-item">
+                        <label>
+                            <span>Background Animation</span>
+                            <input type="checkbox" id="bg-animation" class="toggle-switch" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="setting-item">
+                        <label>
+                            <span>Background Pattern</span>
+                            <select id="bg-pattern" class="theme-select">
+                                <option value="particles">Particles</option>
+                                <option value="waves">Waves</option>
+                                <option value="grid">Grid</option>
+                                <option value="dots">Dots</option>
+                                <option value="stars">Stars</option>
+                                <option value="circuit">Circuit</option>
+                                <option value="spiral">Spiral</option>
+                                <option value="matrix">Matrix</option>
+                                <option value="aurora">Aurora</option>
+                                <option value="nebula">Nebula</option>
+                                <option value="hexagons">Hexagons</option>
+                                <option value="ripples">Ripples</option>
+                                <option value="none">None</option>
+                            </select>
+                        </label>
+                    </div>
+                    <div class="setting-item">
+                        <label>
+                            <span>Background Color</span>
+                            <div class="color-picker-container">
+                                <input type="color" id="bg-color" class="color-picker" value="#0a0e27">
+                                <input type="text" id="bg-color-text" class="color-text-input" value="#0a0e27" maxlength="7">
+                            </div>
+                        </label>
+                    </div>
+                    <div class="setting-item">
+                        <label>
+                            <span>Accent Color</span>
+                            <div class="color-picker-container">
+                                <input type="color" id="accent-color" class="color-picker" value="#00d4ff">
+                                <input type="text" id="accent-color-text" class="color-text-input" value="#00d4ff" maxlength="7">
+                            </div>
+                        </label>
+                    </div>
+                    <div class="setting-item">
+                        <label>
+                            <span>Animation Speed</span>
+                            <input type="range" id="animation-speed" class="range-slider" min="0.5" max="2" step="0.1" value="1">
+                            <span class="range-value" id="speed-value">1.0x</span>
+                        </label>
+                    </div>
+                    <div class="setting-item">
+                        <label>
+                            <span>Theme</span>
+                            <select id="theme-select" class="theme-select">
+                                <option value="dark">Dark</option>
+                                <option value="light">Light</option>
+                                <option value="auto">Auto</option>
+                            </select>
+                        </label>
+                    </div>
+                </div>
+                <div class="settings-section">
+                    <h3>Game Options</h3>
+                    <div class="setting-item">
+                        <label>
+                            <span>Default Open Method</span>
+                            <select id="open-method" class="theme-select">
+                                <option value="embed">Embed in Page</option>
+                                <option value="newtab">New Tab</option>
+                                <option value="popup">Popup Window</option>
+                                <option value="aboutblank">About:Blank (New Tab)</option>
+                            </select>
+                        </label>
+                    </div>
+                    <div class="setting-item">
+                        <label>
+                            <span>Show "Open in New Tab" Button</span>
+                            <input type="checkbox" id="show-open-btn" class="toggle-switch" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+                <div class="settings-section">
+                    <h3>Account</h3>
+                    <div class="setting-item">
+                        <button class="btn-primary" id="login-btn">Login</button>
+                        <button class="btn-secondary" id="register-btn">Register</button>
+                    </div>
+                </div>
+                <div class="settings-section">
+                    <h3>Language</h3>
+                    <div class="setting-item">
+                        <select id="language-select" class="theme-select">
+                            <option value="en">English</option>
+                            <option value="es">Español</option>
+                            <option value="fr">Français</option>
+                            <option value="de">Deutsch</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Detail Page (hidden by default) -->
+    <div class="game-detail-page" id="game-detail-page">
+        <button class="back-btn" id="back-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
+            Back
+        </button>
+        <div class="game-detail-content" id="game-detail-content">
+            <!-- Content will be dynamically inserted -->
+        </div>
+    </div>
+
+    <script src="background.js"></script>
+    <script src="frameworkDetector.js"></script>
+    <script src="frameworkFilter.js"></script>
+    <script src="gameData.js"></script>
+    <script src="main.js"></script>
+</body>
+</html>
+

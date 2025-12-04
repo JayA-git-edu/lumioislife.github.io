@@ -1,146 +1,49 @@
-# Lumio - Modern Gaming Platform
+# Default Starter Kit for JavaScript
 
-A bright, futuristic, and smooth gaming website featuring a modern UI with neon accents, smooth animations, and a comprehensive game library.
+[![Deploy to Fastly](https://deploy.edgecompute.app/button)](https://deploy.edgecompute.app/fastly/compute-starter-kit-javascript-default)
+
+Get to know the Fastly Compute environment with a basic starter that demonstrates routing, simple synthetic responses and code comments that cover common patterns.
+
+**For more details about other starter kits for Compute, see the [Fastly Documentation Hub](https://www.fastly.com/documentation/solutions/starters)**
 
 ## Features
 
-### 🎮 Framework Support
+* Allow only requests with particular HTTP methods
+* Match request URL path and methods for routing
+* Build synthetic responses at the edge
 
-Lumio supports multiple game frameworks and engines:
+## Understanding the code
 
-- **Unity WebGL** (Old & New formats)
-  - Automatic detection of Unity games
-  - Support for both UnityLoader.js and new WebGL.loader.js formats
-  - Fullscreen support
-  
-- **Construct 3**
-  - C3 runtime games
-  - Offline client support
-  
-- **Phaser**
-  - Phaser.js games
-  - HTML5 canvas games
-  
-- **Godot**
-  - Godot Web exports
-  - WASM support
-  
-- **PlayCanvas**
-  - PlayCanvas engine games
-  
-- **Three.js / PixiJS**
-  - WebGL-based games
-  
-- **Flash (Ruffle)**
-  - Flash games via Ruffle emulator
-  
-- **HTML5**
-  - Standard HTML5/JavaScript games
-  - Canvas-based games
+This starter is intentionally lightweight, and requires no dependencies aside from the [`@fastly/js-compute`](https://www.npmjs.com/package/@fastly/js-compute) npm package. It will help you understand the basics of processing requests at the edge using Fastly. This starter includes implementations of common patterns explained in our [using Compute](https://www.fastly.com/documentation/guides/compute/javascript/) and [VCL migration](https://www.fastly.com/documentation/guides/compute/migrate/) guides.
 
-Games are automatically detected and loaded with the appropriate framework handler.
+The starter doesn't require the use of any backends. Once deployed, you will have a Fastly service running on Compute that can generate synthetic responses at the edge.
 
-### 🎮 Main Features
+## Running the application
 
-1. **Game Grid (Home Page)**
-   - Grid of 400 square game frames
-   - Rounded curved edges (20-30px radius)
-   - PNG thumbnails for each game
-   - Hover effects: scale-up, glow border, smooth shadow raise
-   - Click to open individual game pages
+To create an application using this starter kit, create a new directory for your application and switch to it, and then type the following command:
 
-2. **Game Pages**
-   - Large header banner
-   - Play button with embedded game iframe
-   - Game description panel
-   - Controls/Tutorial section
-   - Tags (Action, Puzzle, Casual, etc.)
-   - Recommended games footer
+```shell
+npm create @fastly/compute@latest -- --language=javascript --default-starter-kit
+```
 
-3. **Animated Background**
-   - Subtle particle field
-   - Flowing gradient waves
-   - Smooth 60fps animation
-   - Dark theme with neon accents (blue, purple, pink)
-   - Toggleable via settings
+To build and run your new application in the local development environment, type the following command:
 
-4. **Navigation Bar**
-   - Glowing "Lumio" logo
-   - Navigation buttons: Home, Categories, New Games, Trending, Favorites
-   - Live-filter search bar
-   - Settings button
-   - Profile icon dropdown
+```shell
+npm run start
+```
 
-5. **Settings Menu**
-   - Toggle sound effects
-   - Toggle background animation
-   - Light/Dark mode selector
-   - Profile settings
-   - Account login/register buttons
-   - Language selector
-   - Preferences saved to local storage
+To build and deploy your application to your Fastly account, type the following command. The first time you deploy the application, you will be prompted to create a new service in your account. 
 
-6. **Site-Wide Style**
-   - Rounded shapes with neon glow accents
-   - Smooth transitions (200-300ms)
-   - Fully responsive (PC, tablet, mobile)
-   - Modern gaming UI aesthetic
+```shell
+npm run deploy
+```
 
-7. **General Behaviors**
-   - Lazy-loading for game frames
-   - Smooth scrolling throughout
-   - Loading screen with animated Lumio logo
-   - Quick and polished interactions
+## New to Fastly Compute?
 
-## Game Discovery
+The [Fastly Compute platform](https://www.fastly.com/documentation/guides/compute/) is an advanced edge computing system that runs your code, in your favorite language, on its global edge network. Security and portability are provided by compiling your code to WebAssembly.
 
-The site automatically discovers games by:
-- Scanning for game folders
-- Looking for thumbnail images (`thumbnail.png`, `thumb.png`, `cover.png`)
-- Categorizing games based on folder names
-- **Detecting game frameworks automatically** (Unity, Construct, Phaser, etc.)
-- Generating game metadata
+Get started with your [free Fastly developer account](https://www.fastly.com/signup/?tier=free), and join the [Fastly community forum](https://community.fastly.com/) to ask any questions and show off the sites that you build!
 
-### Framework Detection
+## Security issues
 
-The system automatically detects game frameworks by checking for:
-- **Unity WebGL**: `Build/` folder, `TemplateData/`, `UnityLoader.js`
-- **Construct 3**: `scripts/c3runtime.js`, `data.json`
-- **Phaser**: `phaser.js` or `phaser.min.js`
-- **Godot**: `godot.js`, `engine.wasm`
-- And more...
-
-Each game is tagged with its framework, which is displayed on the game detail page.
-
-## Customization
-
-### Colors
-Edit CSS variables in `assets/css/style.css`:
-- `--neon-blue`, `--neon-purple`, `--neon-pink`: Neon accent colors
-- `--bg-primary`, `--bg-secondary`: Background colors
-- `--text-primary`, `--text-secondary`: Text colors
-
-### Adding Games
-Games are automatically discovered from folder structure. Ensure each game folder contains:
-- `index.html` (the game file)
-- A thumbnail image (`thumbnail.png`, `thumb.png`, or `cover.png`)
-
-## Browser Support
-
-- Chrome/Edge (recommended)
-- Firefox
-- Safari
-- Modern mobile browsers
-
-## Performance
-
-- Lazy loading for images
-- Optimized animations (60fps)
-- Efficient game grid rendering
-- Local storage for preferences
-
-## License
-
-This project is open source and available for use.
-
-
+Please see our [SECURITY.md](SECURITY.md) for guidance on reporting security-related issues.
